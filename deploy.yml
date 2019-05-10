@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azvnettest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azvnettest
+  template:
+    metadata:
+      labels:
+        app: azvnettest
+    spec:
+      containers:
+      - name: azvnettest
+        image: nginxdemos/hello
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 80
+
+      imagePullSecrets:
+      - name: acr-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azvnettest
+spec:
+  # loadBalancerIP: $LOAD_BALANCER_IP
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  - name: https
+    port: 443
+    targetPort: 443
+  selector:
+    app: azvnettest
