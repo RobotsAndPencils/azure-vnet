@@ -1,21 +1,26 @@
 LOCATION=westus
 APP_NAME=azvnettest
-VNET_GROUP_NAME=${APP_NAME}-vnet
+VNET_NAME=${APP_NAME}-vnet
 GROUP_NAME=${APP_NAME}-Group
 CLUSTER_NAME=${APP_NAME}-Cluster
 IP_NAME=${APP_NAME}-IP
 SERVER_NAME=${APP_NAME}.$LOCATION.cloudapp.azure.com
 
-az group create --name $VNET_GROUP_NAME --location $LOCATION
+az group create --name $GROUP_NAME --location $LOCATION
 
-az network vnet create --resource-group $VNET_GROUP_NAME --name $VNET_GROUP_NAME --address-prefixes 10.0.0.0/8 --location $LOCATION
-az network vnet subnet create --resource-group $VNET_GROUP_NAME --vnet-name $VNET_GROUP_NAME \
-  --name ${VNET_GROUP_NAME}-subnet --address-prefixes 10.1.0.0/16
+az network vnet create --resource-group $GROUP_NAME --name $VNET_NAME --address-prefixes 10.0.0.0/8 --location $LOCATION
+az network vnet subnet create --resource-group $GROUP_NAME --vnet-name $VNET_NAME \
+  --name ${VNET_NAME}-subnet --address-prefixes 10.1.0.0/16
 
-VNET_ID=$(az network vnet show --resource-group $VNET_GROUP_NAME --name $VNET_GROUP_NAME --query id -o tsv)
+VNET_ID=$(az network vnet show --resource-group $GROUP_NAME --name $VNET_NAME --query id -o tsv)
+
+az ad sp delete --id http://${APP_NAME}-sp
 
 SP_PASSWD=$(az ad sp create-for-rbac --name http://${APP_NAME}-sp --skip-assignment --query password -o tsv )
 SP_ID=$(az ad sp show --id http://${APP_NAME}-sp --query appId --output tsv)
+
+echo Sleeping...
+sleep 60
 
 STATUS=$(az role assignment create --assignee $SP_ID --scope $VNET_ID --role Contributor)
 
@@ -23,9 +28,7 @@ echo $STATUS
 
 kubectl config use-context $CLUSTER_NAME
 
-SUBNET_ID=$(az network vnet subnet show --resource-group $VNET_GROUP_NAME --vnet-name $VNET_GROUP_NAME --name ${VNET_GROUP_NAME}-subnet --query id -o tsv)
-
-az group create --name $GROUP_NAME --location $LOCATION
+SUBNET_ID=$(az network vnet subnet show --resource-group $GROUP_NAME --vnet-name $VNET_NAME --name ${VNET_NAME}-subnet --query id -o tsv)
 
 az aks create  --resource-group $GROUP_NAME --name $CLUSTER_NAME --location $LOCATION \
   --node-count 1 --node-vm-size Standard_B2s --enable-addons monitoring --generate-ssh-keys \
