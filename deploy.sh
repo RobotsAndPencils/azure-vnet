@@ -1,5 +1,5 @@
 LOCATION=westus
-APP_NAME=azvnettest
+APP_NAME=vnettest
 VNET_NAME=${APP_NAME}-vnet
 GROUP_NAME=${APP_NAME}-Group
 CLUSTER_NAME=${APP_NAME}-Cluster
@@ -22,9 +22,9 @@ SP_ID=$(az ad sp show --id http://${APP_NAME}-sp --query appId --output tsv)
 echo Sleeping...
 sleep 60
 
-STATUS=$(az role assignment create --assignee $SP_ID --scope $VNET_ID --role Contributor)
+STATUS=$(az role assignment create --assignee $SP_ID --scope $VNET_ID --role "Network Contributor")
 
-echo $STATUS
+echo Role Status: $STATUS
 
 kubectl config use-context $CLUSTER_NAME
 
@@ -48,7 +48,7 @@ LOAD_BALANCER_HOSTNAME=$(az network public-ip show --resource-group $LOAD_BALANC
 
 CLUSTER_CLIENT_ID=$(az aks show --name $CLUSTER_NAME --resource-group $GROUP_NAME --query servicePrincipalProfile.clientId -o tsv)
 # az role assignment create --role "Network Contributor" --assignee $CLUSTER_CLIENT_ID --resource-group $LOAD_BALANCER_RESOURCE_GROUP
-az role assignment create --role "Owner" --assignee $CLUSTER_CLIENT_ID --resource-group $LOAD_BALANCER_RESOURCE_GROUP
+# az role assignment create --role "Owner" --assignee $CLUSTER_CLIENT_ID --resource-group $LOAD_BALANCER_RESOURCE_GROUP
 
 az aks get-credentials --resource-group $GROUP_NAME --name $CLUSTER_NAME
 
