@@ -33,7 +33,7 @@ kind: Service
 metadata:
   name: azvnettest
 spec:
-  # loadBalancerIP: $LOAD_BALANCER_IP
+  loadBalancerIP: $LOAD_BALANCER_IP
   type: LoadBalancer
   ports:
   - name: http

@@ -1,5 +1,5 @@
-LOCATION=westus
-APP_NAME=azvnettest
+LOCATION=centralus
+APP_NAME=vnettest
 VNET_GROUP_NAME=${APP_NAME}-vnet
 GROUP_NAME=${APP_NAME}-Group
 CLUSTER_NAME=${APP_NAME}-Cluster
@@ -17,9 +17,11 @@ VNET_ID=$(az network vnet show --resource-group $VNET_GROUP_NAME --name $VNET_GR
 SP_PASSWD=$(az ad sp create-for-rbac --name http://${APP_NAME}-sp --skip-assignment --query password -o tsv )
 SP_ID=$(az ad sp show --id http://${APP_NAME}-sp --query appId --output tsv)
 
-STATUS=$(az role assignment create --assignee $SP_ID --scope $VNET_ID --role Contributor)
+echo Sleeping to create role ...
+sleep 60
 
-echo $STATUS
+echo SP_ID: $SP_ID SP_PASSWD: $SP_PASSWD
+az role assignment create --assignee $SP_ID --scope $VNET_ID --role "Network Contributor"
 
 kubectl config use-context $CLUSTER_NAME
 
@@ -44,8 +46,8 @@ LOAD_BALANCER_IP=$(az network public-ip show --resource-group $LOAD_BALANCER_RES
 LOAD_BALANCER_HOSTNAME=$(az network public-ip show --resource-group $LOAD_BALANCER_RESOURCE_GROUP --name $IP_NAME --query dnsSettings.fqdn --output tsv)
 
 CLUSTER_CLIENT_ID=$(az aks show --name $CLUSTER_NAME --resource-group $GROUP_NAME --query servicePrincipalProfile.clientId -o tsv)
-# az role assignment create --role "Network Contributor" --assignee $CLUSTER_CLIENT_ID --resource-group $LOAD_BALANCER_RESOURCE_GROUP
-az role assignment create --role "Owner" --assignee $CLUSTER_CLIENT_ID --resource-group $LOAD_BALANCER_RESOURCE_GROUP
+# # az role assignment create --role "Network Contributor" --assignee $CLUSTER_CLIENT_ID --resource-group $LOAD_BALANCER_RESOURCE_GROUP
+# az role assignment create --role "Owner" --assignee $CLUSTER_CLIENT_ID --resource-group $LOAD_BALANCER_RESOURCE_GROUP
 
 az aks get-credentials --resource-group $GROUP_NAME --name $CLUSTER_NAME
 
